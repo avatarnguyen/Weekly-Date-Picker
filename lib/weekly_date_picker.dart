@@ -9,6 +9,7 @@ class WeeklyDatePicker extends StatefulWidget {
     Key? key,
     required this.selectedDay,
     required this.changeDay,
+    this.controller,
     this.weekdayText = 'Week',
     this.weekdays = const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     this.backgroundColor = const Color(0xFFFAFAFA),
@@ -27,6 +28,13 @@ class WeeklyDatePicker extends StatefulWidget {
     this.indicatorRadius = 14.0,
     this.height,
     this.afterTodayDigitsColor,
+    this.weekIndexOffset = 5200,
+    this.selectedWeekdayTextColor,
+    this.showTodayHighlight = false,
+    this.todayTextColor,
+    this.todayBackgroundColor,
+    this.todayBorderColor,
+    this.dayIndicatorBuilder,
   })  : assert(weekdays.length == daysInWeek,
             "weekdays must be of length $daysInWeek"),
         super(key: key);
@@ -73,6 +81,12 @@ class WeeklyDatePicker extends StatefulWidget {
   /// Specifies the number of weekdays to render, default is 7, so Monday to Sunday
   final int daysInWeek;
 
+  final PageController? controller;
+
+  /// how far back in time the date picker should go, default is 52 weeks * 100
+  /// About 100 years back in time should be sufficient for most users, 52 weeks * 100
+  final int weekIndexOffset;
+
   /// The TextStyle of the digits
   final TextStyle? digitsTextStyle;
 
@@ -88,15 +102,22 @@ class WeeklyDatePicker extends StatefulWidget {
   /// Color of future digits text
   final Color? afterTodayDigitsColor;
 
+  final Color? selectedWeekdayTextColor;
+
+  final bool showTodayHighlight;
+
+  final Color? todayTextColor;
+  final Color? todayBackgroundColor;
+  final Color? todayBorderColor;
+
+  final Widget Function(DateTime)? dayIndicatorBuilder;
+
   @override
   _WeeklyDatePickerState createState() => _WeeklyDatePickerState();
 }
 
 class _WeeklyDatePickerState extends State<WeeklyDatePicker> {
   final DateTime _todaysDateTime = DateTime.now();
-
-  // About 100 years back in time should be sufficient for most users, 52 weeks * 100
-  final int _weekIndexOffset = 5200;
 
   late final PageController _controller;
   late final DateTime _initialSelectedDay;
@@ -105,7 +126,8 @@ class _WeeklyDatePickerState extends State<WeeklyDatePicker> {
   @override
   void initState() {
     super.initState();
-    _controller = PageController(initialPage: _weekIndexOffset);
+    _controller = widget.controller ??
+        PageController(initialPage: widget.weekIndexOffset);
     _initialSelectedDay = widget.selectedDay;
     _weeknumberInSwipe = widget.selectedDay.weekOfYear;
   }
@@ -118,6 +140,7 @@ class _WeeklyDatePickerState extends State<WeeklyDatePicker> {
 
   @override
   Widget build(BuildContext context) {
+    final int _weekIndexOffset = widget.weekIndexOffset;
     return Container(
       height: widget.height ?? 64,
       color: widget.backgroundColor,
@@ -177,11 +200,13 @@ class _WeeklyDatePickerState extends State<WeeklyDatePicker> {
 
     final afterTodayDigitsColor =
         widget.afterTodayDigitsColor ?? widget.digitsColor;
-    final dayTextColor = isSelected
-        ? widget.selectedDigitColor
-        : isAfterToday
-            ? afterTodayDigitsColor
-            : widget.digitsColor;
+    final dayTextColor = isTodaysDate
+        ? widget.todayTextColor
+        : isSelected
+            ? widget.selectedDigitColor
+            : isAfterToday
+                ? afterTodayDigitsColor
+                : widget.digitsColor;
 
     final weekDayColor =
         isAfterToday ? afterTodayDigitsColor : widget.weekdayTextColor;
@@ -207,26 +232,40 @@ class _WeeklyDatePickerState extends State<WeeklyDatePicker> {
               Container(
                 padding: const EdgeInsets.all(1.0),
                 decoration: BoxDecoration(
-                    // Border around today's date
-                    color: isTodaysDate
-                        ? widget.selectedDigitBorderColor
-                        : Colors.transparent,
-                    shape: BoxShape.circle),
+                  // Border around today's date
+                  color: isTodaysDate
+                      ? (widget.todayBorderColor ??
+                          widget.selectedDigitBorderColor)
+                      : Colors.transparent,
+                  shape: BoxShape.circle,
+                ),
                 child: CircleAvatar(
-                  backgroundColor: isSelected
-                      ? widget.selectedDigitBackgroundColor
-                      : widget.backgroundColor,
+                  backgroundColor: isTodaysDate
+                      ? widget.todayBackgroundColor
+                      : isSelected
+                          ? widget.selectedDigitBackgroundColor
+                          : widget.backgroundColor,
                   radius: widget.indicatorRadius,
-                  child: Text(
-                    '${dateTime.day}',
-                    style: widget.digitsTextStyle != null
-                        ? widget.digitsTextStyle!.copyWith(
-                            color: dayTextColor,
-                          )
-                        : TextStyle(
-                            fontSize: 16.0,
-                            color: dayTextColor,
-                          ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: widget.dayIndicatorBuilder != null
+                        ? MainAxisAlignment.end
+                        : MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${dateTime.day}',
+                        style: widget.digitsTextStyle != null
+                            ? widget.digitsTextStyle!.copyWith(
+                                color: dayTextColor,
+                              )
+                            : TextStyle(
+                                fontSize: 16.0,
+                                color: dayTextColor,
+                              ),
+                      ),
+                      if (widget.dayIndicatorBuilder != null)
+                        widget.dayIndicatorBuilder!.call(dateTime),
+                    ],
                   ),
                 ),
               ),
