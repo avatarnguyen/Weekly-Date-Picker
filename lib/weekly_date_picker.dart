@@ -22,6 +22,11 @@ class WeeklyDatePicker extends StatefulWidget {
     this.weeknumberColor = const Color(0xFFB2F5FE),
     this.weeknumberTextColor = const Color(0xFF000000),
     this.daysInWeek = 7,
+    this.digitsTextStyle,
+    this.weekDayTextStyle,
+    this.indicatorRadius = 14.0,
+    this.height,
+    this.afterTodayDigitsColor,
   })  : assert(weekdays.length == daysInWeek,
             "weekdays must be of length $daysInWeek"),
         super(key: key);
@@ -68,6 +73,21 @@ class WeeklyDatePicker extends StatefulWidget {
   /// Specifies the number of weekdays to render, default is 7, so Monday to Sunday
   final int daysInWeek;
 
+  /// The TextStyle of the digits
+  final TextStyle? digitsTextStyle;
+
+  /// The TextStyle of the weekDayText
+  final TextStyle? weekDayTextStyle;
+
+  /// The radius of the indicator circle
+  final double indicatorRadius;
+
+  /// The height of the date picker
+  final double? height;
+
+  /// Color of future digits text
+  final Color? afterTodayDigitsColor;
+
   @override
   _WeeklyDatePickerState createState() => _WeeklyDatePickerState();
 }
@@ -99,7 +119,7 @@ class _WeeklyDatePickerState extends State<WeeklyDatePicker> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 64,
+      height: widget.height ?? 64,
       color: widget.backgroundColor,
       child: Row(
         children: <Widget>[
@@ -112,7 +132,7 @@ class _WeeklyDatePickerState extends State<WeeklyDatePicker> {
                     style: TextStyle(color: widget.weeknumberTextColor),
                   ),
                 )
-              : Container(),
+              : const SizedBox.shrink(),
           Expanded(
             child: PageView.builder(
               controller: _controller,
@@ -153,6 +173,15 @@ class _WeeklyDatePickerState extends State<WeeklyDatePicker> {
     final String weekday = widget.weekdays[dateTime.weekday - 1];
     final bool isSelected = dateTime.isSameDateAs(widget.selectedDay);
     final bool isTodaysDate = dateTime.isSameDateAs(_todaysDateTime);
+    final bool isAfterToday = dateTime.isAfter(_todaysDateTime);
+
+    final afterTodayDigitsColor =
+        widget.afterTodayDigitsColor ?? widget.digitsColor;
+    final dayTextColor = isSelected
+        ? widget.selectedDigitColor
+        : isAfterToday
+            ? afterTodayDigitsColor
+            : widget.digitsColor;
 
     return Expanded(
       child: GestureDetector(
@@ -167,7 +196,7 @@ class _WeeklyDatePickerState extends State<WeeklyDatePicker> {
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: Text(
                   '$weekday',
-                  style:
+                  style: widget.weekDayTextStyle ??
                       TextStyle(fontSize: 12.0, color: widget.weekdayTextColor),
                 ),
               ),
@@ -183,14 +212,17 @@ class _WeeklyDatePickerState extends State<WeeklyDatePicker> {
                   backgroundColor: isSelected
                       ? widget.selectedDigitBackgroundColor
                       : widget.backgroundColor,
-                  radius: 14.0,
+                  radius: widget.indicatorRadius,
                   child: Text(
                     '${dateTime.day}',
-                    style: TextStyle(
-                        fontSize: 16.0,
-                        color: isSelected
-                            ? widget.selectedDigitColor
-                            : widget.digitsColor),
+                    style: widget.digitsTextStyle != null
+                        ? widget.digitsTextStyle!.copyWith(
+                            color: dayTextColor,
+                          )
+                        : TextStyle(
+                            fontSize: 16.0,
+                            color: dayTextColor,
+                          ),
                   ),
                 ),
               ),
