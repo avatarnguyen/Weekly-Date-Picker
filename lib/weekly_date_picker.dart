@@ -238,11 +238,13 @@ class _WeeklyDatePickerState extends State<WeeklyDatePicker> {
                 padding: const EdgeInsets.all(1.0),
                 decoration: BoxDecoration(
                   // Border around today's date
-                  color: isTodaysDate
-                      ? (widget.todayBorderColor ??
-                          widget.selectedDigitBorderColor)
-                      : Colors.transparent,
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isTodaysDate
+                        ? (widget.todayBorderColor ??
+                            widget.selectedDigitBorderColor)
+                        : Colors.transparent,
+                  ),
                 ),
                 child: CircleAvatar(
                   backgroundColor: isTodaysDate
