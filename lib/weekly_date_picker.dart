@@ -29,8 +29,7 @@ class WeeklyDatePicker extends StatefulWidget {
     this.height,
     this.afterTodayDigitsColor,
     this.weekIndexOffset = 5200,
-    this.selectedWeekdayTextColor,
-    this.showTodayHighlight = false,
+    this.selectedWeekdayTextStyle,
     this.todayTextColor,
     this.todayBackgroundColor,
     this.todayBorderColor,
@@ -102,9 +101,7 @@ class WeeklyDatePicker extends StatefulWidget {
   /// Color of future digits text
   final Color? afterTodayDigitsColor;
 
-  final Color? selectedWeekdayTextColor;
-
-  final bool showTodayHighlight;
+  final TextStyle? selectedWeekdayTextStyle;
 
   final Color? todayTextColor;
   final Color? todayBackgroundColor;
@@ -200,16 +197,24 @@ class _WeeklyDatePickerState extends State<WeeklyDatePicker> {
 
     final afterTodayDigitsColor =
         widget.afterTodayDigitsColor ?? widget.digitsColor;
-    final dayTextColor = isTodaysDate
-        ? widget.todayTextColor
-        : isSelected
-            ? widget.selectedDigitColor
-            : isAfterToday
-                ? afterTodayDigitsColor
-                : widget.digitsColor;
+
+    late Color? dayTextColor;
+    if (isTodaysDate) {
+      dayTextColor = widget.todayTextColor;
+    } else if (isSelected) {
+      dayTextColor = widget.selectedDigitColor;
+    } else if (isAfterToday) {
+      dayTextColor = afterTodayDigitsColor;
+    } else {
+      dayTextColor = widget.digitsColor;
+    }
 
     final weekDayColor =
         isAfterToday ? afterTodayDigitsColor : widget.weekdayTextColor;
+
+    final weekDayTextStyle = widget.weekDayTextStyle != null
+        ? widget.weekDayTextStyle!.copyWith(color: weekDayColor)
+        : TextStyle(fontSize: 12.0, color: weekDayColor);
 
     return Expanded(
       child: GestureDetector(
@@ -224,9 +229,9 @@ class _WeeklyDatePickerState extends State<WeeklyDatePicker> {
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: Text(
                   '$weekday',
-                  style: widget.weekDayTextStyle != null
-                      ? widget.weekDayTextStyle!.copyWith(color: weekDayColor)
-                      : TextStyle(fontSize: 12.0, color: weekDayColor),
+                  style: isSelected
+                      ? widget.selectedWeekdayTextStyle
+                      : weekDayTextStyle,
                 ),
               ),
               Container(
