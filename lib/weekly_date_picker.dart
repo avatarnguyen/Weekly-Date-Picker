@@ -183,6 +183,9 @@ class _WeeklyDatePickerState extends State<WeeklyDatePicker> {
             ? afterTodayDigitsColor
             : widget.digitsColor;
 
+    final weekDayColor =
+        isAfterToday ? afterTodayDigitsColor : widget.weekdayTextColor;
+
     return Expanded(
       child: GestureDetector(
         onTap: () => widget.changeDay(dateTime),
@@ -196,8 +199,9 @@ class _WeeklyDatePickerState extends State<WeeklyDatePicker> {
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: Text(
                   '$weekday',
-                  style: widget.weekDayTextStyle ??
-                      TextStyle(fontSize: 12.0, color: widget.weekdayTextColor),
+                  style: widget.weekDayTextStyle != null
+                      ? widget.weekDayTextStyle!.copyWith(color: weekDayColor)
+                      : TextStyle(fontSize: 12.0, color: weekDayColor),
                 ),
               ),
               Container(
